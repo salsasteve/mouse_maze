@@ -4,7 +4,8 @@ use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::Write;
 
-use crate::Mouse;
+use crate::mouse::Mouse;
+
 
 // ============================================================================
 // PLUGIN DEFINITION
@@ -73,7 +74,9 @@ pub struct LiDARScan {
 pub struct LiDARConfig {
     pub visualization_enabled: bool,
     pub recording_enabled: bool,
+    #[allow(dead_code)]
     pub ray_hit_color: Color,
+    #[allow(dead_code)]
     pub ray_miss_color: Color,
     pub max_recordings: usize,
 }
@@ -335,7 +338,7 @@ pub fn add_lidar_to_entity(commands: &mut Commands, entity: Entity, lidar_config
     ));
 }
 
-/// Enhanced debug system
+#[allow(dead_code)]
 fn debug_lidar_info(
     lidar_query: Query<(Entity, &Transform, &LiDAR, &LiDARScan)>,
     spatial_query: SpatialQuery,
@@ -374,6 +377,7 @@ fn debug_lidar_info(
     }
 }
 
+#[allow(dead_code)]
 fn debug_raycast_simple(
     mouse_query: Query<&Transform, With<Mouse>>,
     spatial_query: SpatialQuery,
