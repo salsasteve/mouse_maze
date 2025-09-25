@@ -3,10 +3,10 @@ use bevy::prelude::*;
 use bevy_ecs_tilemap::TilemapPlugin;
 
 mod maze_maker;
+mod lidar;
 
-use maze_maker::MazeMakerPlugin;
-
-use crate::maze_maker::MazeData;
+use maze_maker::{MazeMakerPlugin, MazeData};
+use lidar::{LiDARPlugin, LiDAR, add_lidar_to_entity}; 
 
 pub struct MousePlugin;
 
@@ -46,7 +46,7 @@ fn spawn_mouse(
         Vec3::new(0.0, 0.0, 0.1)
     };
 
-    commands.spawn((
+    let mouse_entity = commands.spawn((
         Mouse,
         RigidBody::Dynamic,
         Collider::circle(MOUSE_RADIUS),
@@ -55,7 +55,9 @@ fn spawn_mouse(
         Transform::from_translation(mouse_spawn_position),
         Friction::ZERO.with_combine_rule(CoefficientCombine::Min),
         Restitution::ZERO.with_combine_rule(CoefficientCombine::Min),
-    ));
+    )).id();
+
+    add_lidar_to_entity(&mut commands, mouse_entity, LiDAR::default());
 }
 
 fn mouse_manual_control(
@@ -124,6 +126,7 @@ fn main() {
     app.add_plugins(TilemapPlugin);
     app.add_plugins(MazeMakerPlugin);
     app.add_plugins(MousePlugin);
+    app.add_plugins(LiDARPlugin); 
 
     // Add systems and resources
     app.add_systems(Startup, spawn_camera);

@@ -1,1 +1,5 @@
 /target
+/output_data
+.DS_Store
+__pycache__
+.ruff_cache__

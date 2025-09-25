@@ -1,11 +1,11 @@
 use avian2d::prelude::*;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
-use knossos::maze::{GameMap, OrthogonalMazeBuilder, Prim};
+use knossos::maze::{GameMap, HuntAndKill, OrthogonalMazeBuilder, Prim, RecursiveBacktracking};
 
 // --- Constants ---
-const MAZE_WIDTH: usize = 100;
-const MAZE_HEIGHT: usize = 100;
+const MAZE_WIDTH: usize = 10;
+const MAZE_HEIGHT: usize = 10;
 const SEED: u64 = 490;
 const TILE_SIZE: f32 = 16.0;
 const GAME_MAP_SPAN: usize = 3;
@@ -83,10 +83,12 @@ impl Default for MazeGenerator {
 impl MazeGenerator {
     /// Generates a maze, parses it, and saves artifacts to disk.
     pub fn generate(&self) -> Result<MazeData, String> {
+
+        println!("Generating maze with size {}x{} and seed {}", self.width, self.height, self.seed);
         let maze = OrthogonalMazeBuilder::new()
             .width(self.width)
             .height(self.height)
-            .algorithm(Box::new(Prim::new()))
+            .algorithm(Box::new(RecursiveBacktracking))
             .seed(Some(self.seed))
             .build();
 
@@ -94,7 +96,8 @@ impl MazeGenerator {
             .span(self.span)
             .wall('#')
             .passage(' ')
-            .with_start_goal();
+            .with_start_goal().seed(Some(self.seed));
+
 
         let mut start_pos = None;
         let mut goal_pos = None;
