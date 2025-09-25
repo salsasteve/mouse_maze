@@ -1,7 +1,7 @@
 use avian2d::prelude::*;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
-use knossos::maze::{GameMap, HuntAndKill, OrthogonalMazeBuilder, Prim, RecursiveBacktracking};
+use knossos::maze::{GameMap, OrthogonalMazeBuilder, RecursiveBacktracking};
 
 // --- Constants ---
 const MAZE_WIDTH: usize = 10;
@@ -14,8 +14,15 @@ pub struct MazeMakerPlugin;
 
 impl Plugin for MazeMakerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, setup_maze_system);
-        app.add_systems(Startup, create_wall_colliders.after(setup_maze_system));
+        app.add_event::<MazeReady>();
+        app.add_systems(
+            Startup,
+            (
+                generate_maze_system,
+                spawn_maze_tilemap,
+                create_wall_colliders,
+            ).chain(),
+        );
     }
 }
 
@@ -50,15 +57,26 @@ impl From<char> for TileType {
 pub struct MazeData {
     pub pattern: Vec<Vec<TileType>>,
     pub start_pos: Option<UVec2>,
+    #[allow(dead_code)]
     pub goal_pos: Option<UVec2>,
     pub width: u32,
     pub height: u32,
 }
 
 impl MazeData {
-    pub fn is_valid(&self) -> bool {
-        !self.pattern.is_empty() && self.width > 0 && self.height > 0
+
+    fn is_valid(&self) -> bool {
+        self.width > 5 && self.height > 5 && !self.pattern.is_empty() && !self.pattern[0].is_empty()
     }
+}
+
+#[derive(Event)]
+pub struct MazeReady {
+    pub start_world_pos: Vec3,
+    pub start_tile_pos: UVec2,
+    pub goal_world_pos: Option<Vec3>,
+    pub goal_tile_pos: Option<UVec2>,
+    pub maze_size: UVec2,
 }
 
 #[derive(Debug, Clone)]
@@ -80,89 +98,70 @@ impl Default for MazeGenerator {
     }
 }
 
-impl MazeGenerator {
-    /// Generates a maze, parses it, and saves artifacts to disk.
-    pub fn generate(&self) -> Result<MazeData, String> {
+pub fn generate_maze_system(mut commands: Commands) {
+    let generator = MazeGenerator::default();
 
-        println!("Generating maze with size {}x{} and seed {}", self.width, self.height, self.seed);
-        let maze = OrthogonalMazeBuilder::new()
-            .width(self.width)
-            .height(self.height)
-            .algorithm(Box::new(RecursiveBacktracking))
-            .seed(Some(self.seed))
-            .build();
+    let maze = OrthogonalMazeBuilder::new()
+        .width(generator.width)
+        .height(generator.height)
+        .algorithm(Box::new(RecursiveBacktracking))
+        .seed(Some(generator.seed))
+        .build();
 
-        let formatter = GameMap::new()
-            .span(self.span)
-            .wall('#')
-            .passage(' ')
-            .with_start_goal().seed(Some(self.seed));
+    let formatter = GameMap::new()
+        .span(generator.span)
+        .wall('#')
+        .passage(' ')
+        .with_start_goal().seed(Some(generator.seed));
 
 
-        let mut start_pos = None;
-        let mut goal_pos = None;
-        let pattern: Vec<Vec<TileType>> = maze
-            .format(formatter)
-            .into_inner()
-            .lines()
-            .enumerate()
-            .map(|(y, line)| {
-                line.chars()
-                    .enumerate()
-                    .map(|(x, ch)| {
-                        let tile_type = TileType::from(ch);
-                        if tile_type == TileType::Start {
-                            start_pos = Some(UVec2::new(x as u32, y as u32));
-                        } else if tile_type == TileType::Goal {
-                            goal_pos = Some(UVec2::new(x as u32, y as u32));
-                        }
+    let mut start_pos = None;
+    let mut goal_pos = None;
+    let pattern: Vec<Vec<TileType>> = maze
+        .format(formatter)
+        .into_inner()
+        .lines()
+        .enumerate()
+        .map(|(y, line)| {
+            line.chars()
+                .enumerate()
+                .map(|(x, ch)| {
+                    let tile_type = TileType::from(ch);
+                    if tile_type == TileType::Start {
+                        start_pos = Some(UVec2::new(x as u32, y as u32));
+                    } else if tile_type == TileType::Goal {
+                        goal_pos = Some(UVec2::new(x as u32, y as u32));
+                    }
 
-                        tile_type
-                    })
-                    .collect()
-            })
-            .collect();
-
-        if pattern.is_empty() || pattern[0].is_empty() {
-            return Err("Generated an empty maze pattern.".to_string());
-        }
-
-        let height = pattern.len() as u32;
-        let width = pattern[0].len() as u32;
-
-        Ok(MazeData {
-            pattern,
-            start_pos,
-            goal_pos,
-            width,
-            height,
+                    tile_type
+                })
+                .collect()
         })
+        .collect();
+
+    let maze_data = MazeData {
+        pattern: pattern.clone(),
+        start_pos,
+        goal_pos,
+        width: pattern[0].len() as u32,
+        height: pattern.len() as u32,
+    };
+    if maze_data.is_valid() {
+        commands.insert_resource(maze_data);
+        info!("Maze generated successfully");
+    } else {
+        error!("Generated maze data is invalid");
     }
+
 }
 
-/// Bevy system to set up the camera and trigger maze generation and spawning.
-pub fn setup_maze_system(mut commands: Commands, asset_server: Res<AssetServer>) {
-    match MazeGenerator::default().generate() {
-        Ok(maze_data) => {
-            if let Some(start_pos) = spawn_maze_tilemap(&mut commands, &asset_server, &maze_data) {
-                info!("Maze spawned. Player start position: {start_pos:?}");
-            } else {
-                warn!("Maze spawned, but no start position was found.");
-            }
-            
-            // Store the entire maze data as a resource
-            commands.insert_resource(maze_data);
-        }
-        Err(e) => error!("Failed to generate maze: {e}"),
-    }
-}
 
-/// Spawns a bevy_ecs_tilemap entity from MazeData.
 pub fn spawn_maze_tilemap(
-    commands: &mut Commands,
-    asset_server: &Res<AssetServer>,
-    maze_data: &MazeData,
-) -> Option<Vec3> {
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    maze_data: Res<MazeData>,
+    mut maze_ready_events: EventWriter<MazeReady>,
+) {
     let texture_handle = asset_server.load("tiles.png");
     let map_size = TilemapSize {
         x: maze_data.width,
@@ -170,11 +169,12 @@ pub fn spawn_maze_tilemap(
     };
     let mut tile_storage = TileStorage::empty(map_size);
     let tilemap_entity = commands.spawn_empty().id();
+
     let mut start_world_pos = None;
+    let mut goal_world_pos = None;
 
     for y in 0..map_size.y {
         for x in 0..map_size.x {
-            // Flip y-coordinate to match bevy_ecs_tilemap's origin (bottom-left)
             let tile_type = maze_data.pattern[(map_size.y - 1 - y) as usize][x as usize];
             let tile_pos = TilePos { x, y };
 
@@ -185,30 +185,38 @@ pub fn spawn_maze_tilemap(
                 ..default()
             });
 
+            let tile_size = TilemapTileSize { x: TILE_SIZE, y: TILE_SIZE };
+            let grid_size = TilemapGridSize::from(tile_size);
+            let map_type = TilemapType::Square;
+            let anchor = TilemapAnchor::Center;
+
             match tile_type {
                 TileType::Wall => {
                     tile_commands.insert(Wall);
                 }
                 TileType::Start => {
-                    let tile_size = TilemapTileSize {
-                        x: TILE_SIZE,
-                        y: TILE_SIZE,
-                    };
-                    let grid_size = TilemapGridSize::from(tile_size);
-                    let map_type = TilemapType::Square;
-                    let anchor = TilemapAnchor::Center;
-
-                    start_world_pos = Some(
-                        TilePos { x, y }
-                            .center_in_world(
-                                &map_size.into(),
-                                &grid_size,
-                                &tile_size,
-                                &map_type,
-                                &anchor,
-                            )
-                            .extend(0.1),
-                    );
+                    let world_pos = TilePos { x, y }
+                        .center_in_world(
+                            &map_size.into(),
+                            &grid_size,
+                            &tile_size,
+                            &map_type,
+                            &anchor,
+                        )
+                        .extend(0.1);
+                    start_world_pos = Some(world_pos);
+                }
+                TileType::Goal => {
+                    let world_pos = TilePos { x, y }
+                        .center_in_world(
+                            &map_size.into(),
+                            &grid_size,
+                            &tile_size,
+                            &map_type,
+                            &anchor,
+                        )
+                        .extend(0.1);
+                    goal_world_pos = Some(world_pos);
                 }
                 _ => {}
             }
@@ -216,10 +224,7 @@ pub fn spawn_maze_tilemap(
         }
     }
 
-    let tile_size = TilemapTileSize {
-        x: TILE_SIZE,
-        y: TILE_SIZE,
-    };
+    let tile_size = TilemapTileSize { x: TILE_SIZE, y: TILE_SIZE };
     commands.entity(tilemap_entity).insert(TilemapBundle {
         size: map_size,
         storage: tile_storage,
@@ -230,7 +235,19 @@ pub fn spawn_maze_tilemap(
         ..default()
     });
 
-    start_world_pos
+    // Send the maze ready event with all important information
+    if let Some(start_pos) = start_world_pos {
+        maze_ready_events.write(MazeReady {
+            start_world_pos: start_pos,
+            start_tile_pos: maze_data.start_pos.unwrap_or(UVec2::ZERO),
+            goal_world_pos: goal_world_pos,
+            goal_tile_pos: maze_data.goal_pos,
+            maze_size: UVec2::new(maze_data.width, maze_data.height),
+        });
+        info!("Maze is ready! Start position: {}", start_pos);
+    } else {
+        error!("Maze generated without start position!");
+    }
 }
 
 fn create_wall_colliders(
@@ -239,7 +256,7 @@ fn create_wall_colliders(
     tilemap_query: Query<(&TilemapSize, &TilemapTileSize, &TilemapGridSize, &TilemapType, &TilemapAnchor)>,
 ) {
     // Get tilemap parameters for proper coordinate conversion
-    let Ok((map_size, tile_size, grid_size, map_type, anchor)) = tilemap_query.get_single() else {
+    let Ok((map_size, tile_size, grid_size, map_type, anchor)) = tilemap_query.single() else {
         warn!("Could not find tilemap for wall collider creation");
         return;
     };
