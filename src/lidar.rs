@@ -1,5 +1,5 @@
 //! # LiDAR Simulation Module
-//! 
+//!
 //! This module provides a complete LiDAR (Light Detection and Ranging) simulation system
 //! for agents in a 2D environment. It's designed for machine learning and reinforcement
 //! learning applications where agents need spatial awareness.
@@ -140,14 +140,14 @@ pub struct LiDARDataRecorder {
 }
 
 /// Individual LiDAR data point for ML/RL training
-/// 
+///
 /// This structure captures a complete snapshot of an agent's state at a specific moment,
 /// combining sensor data with positional information and actions taken.
-/// 
+///
 /// ## Data Format
-/// 
+///
 /// Each recording contains the following information:
-/// 
+///
 /// ```json
 /// {
 ///   "timestamp": 45.67,                    // When this reading was taken (seconds)
@@ -164,63 +164,63 @@ pub struct LiDARDataRecorder {
 ///   "action_taken": "move_up"               // Action performed at this moment
 /// }
 /// ```
-/// 
+///
 /// ## Field Descriptions
-/// 
+///
 /// ### `timestamp`
 /// - **Type**: `f64` (seconds)
 /// - **Description**: Game time when this recording was captured
 /// - **Use**: Temporal ordering of training samples
-/// 
+///
 /// ### `agent_position`
 /// - **Type**: `[f32, f32]` (world coordinates)
 /// - **Description**: Agent's center position in the world
 /// - **Use**: Spatial context for the sensor reading
-/// 
+///
 /// ### `agent_rotation`
 /// - **Type**: `f32` (radians)
 /// - **Description**: Agent's facing direction (0 = right, π/2 = up, π = left, 3π/2 = down)
 /// - **Use**: Understanding sensor orientation relative to world
-/// 
+///
 /// ### `agent_velocity`
 /// - **Type**: `[f32, f32]` (units per second)
 /// - **Description**: Agent's current movement velocity [x, y]
 /// - **Use**: Motion context for predicting future states
-/// 
+///
 /// ### `distances`
 /// - **Type**: `Vec<f32>` (world units)
 /// - **Description**: Distance from agent center to nearest obstacle for each ray
 /// - **Range**: `[sensor_radius + 2.0, lidar.range]`
 /// - **Use**: Primary sensor input for obstacle detection
-/// 
+///
 /// ### `angles`
 /// - **Type**: `Vec<f32>` (radians)
 /// - **Description**: Absolute world angle of each ray direction
 /// - **Calculation**: `agent_rotation + ray_offset`
 /// - **Use**: Understanding spatial relationship of sensor readings
-/// 
+///
 /// ### `hit_points`
 /// - **Type**: `Vec<[f32, f32]>` (world coordinates)
 /// - **Description**: World position where each ray intersected an obstacle
 /// - **Use**: Detailed spatial mapping, obstacle shape inference
-/// 
+///
 /// ### `action_taken`
 /// - **Type**: `Option<String>`
 /// - **Description**: Action performed by human/AI at this moment
 /// - **Values**: `"move_up"`, `"move_down"`, `"move_left"`, `"move_right"`, `"no_action"`
 /// - **Use**: Supervised learning target for action prediction
-/// 
+///
 /// ## Machine Learning Applications
-/// 
+///
 /// This data format is designed for various ML tasks:
-/// 
+///
 /// ### Supervised Learning
 /// ```python
 /// # Input: [distances, angles, position, rotation, velocity]
 /// # Output: action_taken
 /// model = train_action_predictor(recordings)
 /// ```
-/// 
+///
 /// ### Reinforcement Learning
 /// ```python
 /// # State: distances + position + velocity
@@ -228,22 +228,22 @@ pub struct LiDARDataRecorder {
 /// # Reward: progress toward goal, collision penalty
 /// env = LiDARMazeEnvironment(recordings)
 /// ```
-/// 
+///
 /// ### Imitation Learning
 /// ```python
 /// # Learn from human demonstrations
 /// policy = imitate_human_actions(recordings)
 /// ```
-/// 
+///
 /// ## Data Quality
-/// 
+///
 /// The system filters recordings to ensure quality:
 /// - Only records when `distances` contain meaningful readings (> 6.1 units)
 /// - Limits total recordings to prevent memory issues
 /// - Includes action distribution statistics in exports
-/// 
+///
 /// ## Export Format
-/// 
+///
 /// Data is exported as pretty-printed JSON with statistics:
 /// ```
 /// Exported 1500 LiDAR recordings to lidar_data_1640995200.json
@@ -254,28 +254,28 @@ pub struct LiDARDataRecorder {
 pub struct LiDARRecording {
     /// Game time when this recording was captured (seconds since start)
     pub timestamp: f64,
-    
+
     /// Agent's world position [x, y] in game units
     pub agent_position: Vec2,
-    
+
     /// Agent's rotation in radians (0 = facing right, π/2 = facing up)
     pub agent_rotation: f32,
-    
+
     /// Agent's current velocity [x, y] in units per second
     pub agent_velocity: Vec2,
-    
+
     /// Distance to nearest obstacle for each ray, in world units
     /// Length matches the number of rays configured in LiDAR
     pub distances: Vec<f32>,
-    
+
     /// Absolute angle of each ray in world coordinates (radians)
     /// Length matches distances array
     pub angles: Vec<f32>,
-    
+
     /// World coordinates [x, y] where each ray hit an obstacle
     /// Length matches distances array
     pub hit_points: Vec<Vec2>,
-    
+
     /// Action taken by human/AI at this moment
     /// None if no action system is active
     pub action_taken: Option<String>,
@@ -320,8 +320,8 @@ fn cast_single_ray(
 
     // Exclude the entity itself from raycast hits
     let filter = SpatialQueryFilter::default().with_excluded_entities([entity]);
-    
-    // Perform the raycast 
+
+    // Perform the raycast
     // A raycast is a line from origin in direction for effective_range distance
     if let Some(hit) = spatial_query.cast_ray(ray_origin, direction, effective_range, true, &filter)
     {
@@ -342,7 +342,7 @@ fn perform_lidar_scan(
     spatial_query: &SpatialQuery,
     timestamp: f64,
 ) -> LiDARScan {
-    let position = transform.translation.truncate(); 
+    let position = transform.translation.truncate();
     let rotation = transform.rotation.to_euler(EulerRot::ZYX).0;
 
     let mut distances = Vec::with_capacity(lidar.num_rays);
@@ -636,7 +636,6 @@ fn debug_raycast_simple(
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -646,7 +645,7 @@ mod tests {
     #[test]
     fn test_lidar_default_values() {
         let lidar = LiDAR::default();
-        
+
         assert_eq!(lidar.range, 100.0);
         assert_eq!(lidar.num_rays, 72);
         assert_eq!(lidar.angle_range, std::f32::consts::TAU);
@@ -680,20 +679,20 @@ mod tests {
 
         // First ray should be at -PI/4 (leftmost)
         let angle0 = calculate_ray_angle(0, total_rays, base_rotation, angle_range);
-        assert!((angle0 - (-PI/2.0)).abs() < 0.001);
+        assert!((angle0 - (-PI / 2.0)).abs() < 0.001);
 
-        // Last ray should be at PI/4 (rightmost)  
+        // Last ray should be at PI/4 (rightmost)
         let angle3 = calculate_ray_angle(3, total_rays, base_rotation, angle_range);
-        assert!((angle3 - (PI/4.0)).abs() < 0.001);
+        assert!((angle3 - (PI / 4.0)).abs() < 0.001);
 
         // Middle ray should be at -PI/8
         let angle1 = calculate_ray_angle(1, total_rays, base_rotation, angle_range);
-        assert!((angle1 - (-PI/4.0)).abs() < 0.001);
+        assert!((angle1 - (-PI / 4.0)).abs() < 0.001);
     }
 
     #[test]
     fn test_calculate_ray_angle_with_rotation() {
-        let base_rotation = PI/2.0; // 90 degrees
+        let base_rotation = PI / 2.0; // 90 degrees
         let angle_range = PI; // 180 degrees  
         let total_rays = 2;
 
@@ -704,14 +703,14 @@ mod tests {
         // angle0 should be 90° - 90° = 0°
         // angle1 should be 90° + 0° = 90°
         assert!((angle0 - 0.0).abs() < 0.001);
-        assert!((angle1 - PI/2.0).abs() < 0.001);
+        assert!((angle1 - PI / 2.0).abs() < 0.001);
     }
 
     #[test]
     fn test_get_current_action() {
         // This test would need to mock ButtonInput, but shows the concept
         // In a real test, you'd inject the input state
-        
+
         // Pseudo-test showing the logic:
         // assert_eq!(get_current_action(&up_pressed), Some("move_up".to_string()));
         // assert_eq!(get_current_action(&no_keys), Some("no_action".to_string()));
@@ -750,11 +749,11 @@ mod tests {
     #[test]
     fn test_create_recording() {
         let transform = Transform::from_translation(Vec3::new(10.0, 20.0, 0.0))
-            .with_rotation(Quat::from_rotation_z(PI/4.0));
-        
+            .with_rotation(Quat::from_rotation_z(PI / 4.0));
+
         let scan = LiDARScan {
             distances: vec![15.0, 25.0],
-            angles: vec![0.0, PI/2.0],
+            angles: vec![0.0, PI / 2.0],
             timestamp: 123.456,
             hit_points: vec![Vec2::new(25.0, 20.0), Vec2::new(10.0, 45.0)],
         };
@@ -766,10 +765,10 @@ mod tests {
 
         assert_eq!(recording.timestamp, 123.456);
         assert_eq!(recording.agent_position, Vec2::new(10.0, 20.0));
-        assert!((recording.agent_rotation - PI/4.0).abs() < 0.001);
+        assert!((recording.agent_rotation - PI / 4.0).abs() < 0.001);
         assert_eq!(recording.agent_velocity, Vec2::new(5.0, -3.0));
         assert_eq!(recording.distances, vec![15.0, 25.0]);
-        assert_eq!(recording.angles, vec![0.0, PI/2.0]);
+        assert_eq!(recording.angles, vec![0.0, PI / 2.0]);
         assert_eq!(recording.action_taken, Some("move_up".to_string()));
     }
 
@@ -795,7 +794,7 @@ mod tests {
         ];
 
         let distribution = calculate_action_distribution(&recordings);
-        
+
         assert_eq!(distribution.get("move_up"), Some(&2));
         assert_eq!(distribution.get("move_left"), Some(&1));
         assert_eq!(distribution.get("none"), None); // None actions not counted
@@ -804,7 +803,7 @@ mod tests {
     #[test]
     fn test_lidar_config_defaults() {
         let config = LiDARConfig::default();
-        
+
         assert!(config.visualization_enabled);
         assert!(config.recording_enabled);
         assert_eq!(config.max_recordings, 10000);
@@ -828,11 +827,11 @@ mod tests {
     fn test_write_data_to_file() {
         let test_data = r#"{"test": "data"}"#;
         let filename = "test_output.json";
-        
+
         // Test successful write
         let result = write_data_to_file(filename, test_data);
         assert!(result.is_ok());
-        
+
         // Clean up
         let _ = std::fs::remove_file(filename);
     }
@@ -851,7 +850,7 @@ mod tests {
 
         // First ray should be at -PI (leftmost)
         assert!((angles[0] + PI).abs() < 0.001);
-        
+
         // Should be evenly distributed
         let expected_step = std::f32::consts::TAU / num_rays as f32;
         for i in 1..num_rays {
