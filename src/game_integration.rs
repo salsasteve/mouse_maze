@@ -1,8 +1,7 @@
-use bevy::prelude::*;
-use crate::maze_maker::MazeReady;
 use crate::lidar::{LiDAR, add_lidar_to_entity};
-use crate::mouse::MouseBundle;  
-
+use crate::maze_maker::MazeReady;
+use crate::mouse::MouseBundle;
+use bevy::prelude::*;
 
 pub struct GameIntegrationPlugin;
 
@@ -12,7 +11,6 @@ impl Plugin for GameIntegrationPlugin {
     }
 }
 
-
 fn handle_maze_ready(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -21,9 +19,13 @@ fn handle_maze_ready(
 ) {
     for event in maze_ready_events.read() {
         info!("Maze ready! Spawning mouse at: {}", event.start_world_pos);
-        
+
         let mouse_entity = commands
-            .spawn(MouseBundle::new(&mut meshes, &mut materials, event.start_world_pos))
+            .spawn(MouseBundle::new(
+                &mut meshes,
+                &mut materials,
+                event.start_world_pos,
+            ))
             .id();
 
         add_lidar_to_entity(&mut commands, mouse_entity, LiDAR::default());
