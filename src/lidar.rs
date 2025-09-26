@@ -520,7 +520,7 @@ fn export_data_on_keypress(
 /// Export LiDAR data to JSON file with statistics
 pub fn export_lidar_data(recorder: &LiDARDataRecorder) {
     let filename = format!(
-        "lidar_data_{}.json",
+        "output_data/lidar/lidar_data_{}.json",
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()

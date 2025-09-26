@@ -85,7 +85,7 @@ import json
 import numpy as np
 
 # Load recorded data
-with open('lidar_data_1640995200.json', 'r') as f:
+with open('output_data/lidar/lidar_data_1640995200.json', 'r') as f:
     recordings = json.load(f)
 
 # Extract features and labels
