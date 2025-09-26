@@ -21,11 +21,11 @@ impl Plugin for MazeMakerPlugin {
                 generate_maze_system,
                 spawn_maze_tilemap,
                 create_wall_colliders,
-            ).chain(),
+            )
+                .chain(),
         );
     }
 }
-
 
 #[derive(Component)]
 pub struct Wall;
@@ -64,7 +64,6 @@ pub struct MazeData {
 }
 
 impl MazeData {
-
     fn is_valid(&self) -> bool {
         self.width > 5 && self.height > 5 && !self.pattern.is_empty() && !self.pattern[0].is_empty()
     }
@@ -112,8 +111,8 @@ pub fn generate_maze_system(mut commands: Commands) {
         .span(generator.span)
         .wall('#')
         .passage(' ')
-        .with_start_goal().seed(Some(generator.seed));
-
+        .with_start_goal()
+        .seed(Some(generator.seed));
 
     let mut start_pos = None;
     let mut goal_pos = None;
@@ -152,9 +151,7 @@ pub fn generate_maze_system(mut commands: Commands) {
     } else {
         error!("Generated maze data is invalid");
     }
-
 }
-
 
 pub fn spawn_maze_tilemap(
     mut commands: Commands,
@@ -185,7 +182,10 @@ pub fn spawn_maze_tilemap(
                 ..default()
             });
 
-            let tile_size = TilemapTileSize { x: TILE_SIZE, y: TILE_SIZE };
+            let tile_size = TilemapTileSize {
+                x: TILE_SIZE,
+                y: TILE_SIZE,
+            };
             let grid_size = TilemapGridSize::from(tile_size);
             let map_type = TilemapType::Square;
             let anchor = TilemapAnchor::Center;
@@ -224,7 +224,10 @@ pub fn spawn_maze_tilemap(
         }
     }
 
-    let tile_size = TilemapTileSize { x: TILE_SIZE, y: TILE_SIZE };
+    let tile_size = TilemapTileSize {
+        x: TILE_SIZE,
+        y: TILE_SIZE,
+    };
     commands.entity(tilemap_entity).insert(TilemapBundle {
         size: map_size,
         storage: tile_storage,
@@ -253,7 +256,13 @@ pub fn spawn_maze_tilemap(
 fn create_wall_colliders(
     mut commands: Commands,
     wall_query: Query<(Entity, &TilePos), With<Wall>>,
-    tilemap_query: Query<(&TilemapSize, &TilemapTileSize, &TilemapGridSize, &TilemapType, &TilemapAnchor)>,
+    tilemap_query: Query<(
+        &TilemapSize,
+        &TilemapTileSize,
+        &TilemapGridSize,
+        &TilemapType,
+        &TilemapAnchor,
+    )>,
 ) {
     // Get tilemap parameters for proper coordinate conversion
     let Ok((map_size, tile_size, grid_size, map_type, anchor)) = tilemap_query.single() else {
@@ -262,23 +271,18 @@ fn create_wall_colliders(
     };
 
     let mut wall_positions = Vec::new();
-    
+
     for (entity, tile_pos) in wall_query.iter() {
         // Convert tile position to world position using the same method as the tilemap
-        let world_pos = tile_pos.center_in_world(
-            &(*map_size).into(),
-            grid_size,
-            tile_size,
-            map_type,
-            anchor,
-        );
-        
+        let world_pos =
+            tile_pos.center_in_world(&(*map_size).into(), grid_size, tile_size, map_type, anchor);
+
         wall_positions.push(world_pos);
-        
+
         // Remove the Wall component to avoid processing again
         commands.entity(entity).remove::<Wall>();
     }
-    
+
     // Create compound collider with correct world positions
     if !wall_positions.is_empty() {
         commands.spawn((
@@ -287,43 +291,11 @@ fn create_wall_colliders(
                 wall_positions
                     .iter()
                     .map(|pos| (*pos, 0.0, Collider::rectangle(tile_size.x, tile_size.y)))
-                    .collect()
+                    .collect(),
             ),
             Transform::default(),
         ));
-        
+
         info!("Created wall colliders for {} walls", wall_positions.len());
     }
-}
-
-// Add a helper function to convert tile pos to world pos
-pub fn tile_pos_to_world_pos(tile_pos: UVec2, maze_data: &MazeData) -> Vec3 {
-    let map_size = TilemapSize {
-        x: maze_data.width,
-        y: maze_data.height,
-    };
-    let tile_size = TilemapTileSize {
-        x: TILE_SIZE,
-        y: TILE_SIZE,
-    };
-    let grid_size = TilemapGridSize::from(tile_size);
-    let map_type = TilemapType::Square;
-    let anchor = TilemapAnchor::Center;
-
-    // Convert to flipped coordinates (matching the tilemap)
-    let flipped_y = map_size.y - 1 - tile_pos.y;
-    let bevy_tile_pos = TilePos { 
-        x: tile_pos.x, 
-        y: flipped_y 
-    };
-
-    bevy_tile_pos
-        .center_in_world(
-            &map_size.into(),
-            &grid_size,
-            &tile_size,
-            &map_type,
-            &anchor,
-        )
-        .extend(0.1)
 }
