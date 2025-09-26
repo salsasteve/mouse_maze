@@ -299,29 +299,3 @@ fn create_wall_colliders(
         info!("Created wall colliders for {} walls", wall_positions.len());
     }
 }
-
-// Add a helper function to convert tile pos to world pos
-pub fn tile_pos_to_world_pos(tile_pos: UVec2, maze_data: &MazeData) -> Vec3 {
-    let map_size = TilemapSize {
-        x: maze_data.width,
-        y: maze_data.height,
-    };
-    let tile_size = TilemapTileSize {
-        x: TILE_SIZE,
-        y: TILE_SIZE,
-    };
-    let grid_size = TilemapGridSize::from(tile_size);
-    let map_type = TilemapType::Square;
-    let anchor = TilemapAnchor::Center;
-
-    // Convert to flipped coordinates (matching the tilemap)
-    let flipped_y = map_size.y - 1 - tile_pos.y;
-    let bevy_tile_pos = TilePos {
-        x: tile_pos.x,
-        y: flipped_y,
-    };
-
-    bevy_tile_pos
-        .center_in_world(&map_size.into(), &grid_size, &tile_size, &map_type, &anchor)
-        .extend(0.1)
-}
