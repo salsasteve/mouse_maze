@@ -32,10 +32,10 @@ pub struct Wall;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TileType {
-    Passage = 0,
+    Passage = 5,
     Wall = 1,
-    Goal = 5,
-    Start = 6,
+    Goal = 3,
+    Start = 0,
 }
 
 impl From<char> for TileType {

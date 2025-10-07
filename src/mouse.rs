@@ -6,7 +6,7 @@ pub struct MousePlugin;
 impl Plugin for MousePlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, spawn_camera);
-        app.add_systems(Update, camera_follow_mouse);
+        app.add_systems(Update, (camera_follow_mouse, camera_zoom));
         app.add_systems(Update, mouse_manual_control);
     }
 }
@@ -24,16 +24,16 @@ fn mouse_manual_control(
     for mut velocity in mouse_query.iter_mut() {
         let mut direction = Vec2::ZERO;
 
-        if keyboard_input.pressed(KeyCode::ArrowUp) {
+        if keyboard_input.pressed(KeyCode::ArrowUp) || keyboard_input.pressed(KeyCode::KeyW) {
             direction.y += 1.0;
         }
-        if keyboard_input.pressed(KeyCode::ArrowDown) {
+        if keyboard_input.pressed(KeyCode::ArrowDown) || keyboard_input.pressed(KeyCode::KeyS) {
             direction.y -= 1.0;
         }
-        if keyboard_input.pressed(KeyCode::ArrowLeft) {
+        if keyboard_input.pressed(KeyCode::ArrowLeft) || keyboard_input.pressed(KeyCode::KeyA) {
             direction.x -= 1.0;
         }
-        if keyboard_input.pressed(KeyCode::ArrowRight) {
+        if keyboard_input.pressed(KeyCode::ArrowRight) || keyboard_input.pressed(KeyCode::KeyD) {
             direction.x += 1.0;
         }
 
@@ -61,6 +61,29 @@ fn camera_follow_mouse(
         if let Ok(mut camera_transform) = camera_query.single_mut() {
             camera_transform.translation.x = mouse_transform.translation.x;
             camera_transform.translation.y = mouse_transform.translation.y;
+        }
+    }
+}
+
+fn camera_zoom(
+    keyboard: Res<ButtonInput<KeyCode>>,
+    mut camera_query: Query<&mut Projection, With<FollowCamera>>,
+) {
+    if let Ok(mut projection) = camera_query.single_mut() {
+        const ZOOM_SPEED: f32 = 0.1;
+        const MIN_SCALE: f32 = 0.2;
+        const MAX_SCALE: f32 = 5.0;
+
+        // Match on the projection type to handle orthographic projection
+        if let Projection::Orthographic(ortho) = projection.as_mut() {
+            if keyboard.pressed(KeyCode::KeyZ) {
+                // Zoom in (decrease scale)
+                ortho.scale = (ortho.scale - ZOOM_SPEED).max(MIN_SCALE);
+            }
+            if keyboard.pressed(KeyCode::KeyX) {
+                // Zoom out (increase scale)
+                ortho.scale = (ortho.scale + ZOOM_SPEED).min(MAX_SCALE);
+            }
         }
     }
 }
@@ -93,7 +116,8 @@ impl MouseBundle {
             collider: Collider::circle(MOUSE_RADIUS),
             mesh: Mesh2d(mesh),
             material: MeshMaterial2d(material),
-            transform: Transform::from_translation(position),
+            transform: Transform::from_translation(position)
+                .with_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2)),
             friction: Friction::ZERO.with_combine_rule(CoefficientCombine::Min),
             restitution: Restitution::ZERO.with_combine_rule(CoefficientCombine::Min),
         }

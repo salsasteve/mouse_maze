@@ -6,11 +6,13 @@ mod game_integration;
 mod lidar;
 mod maze_maker;
 mod mouse;
+mod brain;
 
 use game_integration::GameIntegrationPlugin;
 use lidar::LiDARPlugin;
 use maze_maker::MazeMakerPlugin;
 use mouse::MousePlugin;
+use brain::BrainPlugin;
 
 fn main() {
     let mut app = App::new();
@@ -34,6 +36,7 @@ fn main() {
     app.add_plugins(MousePlugin);
     app.add_plugins(LiDARPlugin);
     app.add_plugins(GameIntegrationPlugin);
+    app.add_plugins(BrainPlugin);
 
     app.insert_resource(Gravity(Vec2::ZERO));
 
