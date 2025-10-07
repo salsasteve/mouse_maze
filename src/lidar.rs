@@ -43,7 +43,7 @@ impl Default for LiDAR {
             angle_range: std::f32::consts::TAU, // Full 360 degrees
             update_frequency: 10.0,             // 10 Hz
             last_update: 0.0,
-            sensor_radius: 4.0, // Start at center
+            sensor_radius: 2.0, // Start at center
         }
     }
 }

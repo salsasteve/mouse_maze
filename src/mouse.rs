@@ -19,30 +19,40 @@ pub struct Mouse;
 
 fn mouse_manual_control(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut mouse_query: Query<&mut LinearVelocity, With<Mouse>>,
+    mut mouse_query: Query<(&mut LinearVelocity, &mut AngularVelocity, &Transform), With<Mouse>>,
 ) {
-    for mut velocity in mouse_query.iter_mut() {
-        let mut direction = Vec2::ZERO;
+    for (mut velocity, mut angular_velocity, transform) in mouse_query.iter_mut() {
+        let mut forward_input = 0.0;
+        let mut rotation_input = 0.0;
 
+        // Forward/backward movement
         if keyboard_input.pressed(KeyCode::ArrowUp) || keyboard_input.pressed(KeyCode::KeyW) {
-            direction.y += 1.0;
+            forward_input += 1.0;
         }
         if keyboard_input.pressed(KeyCode::ArrowDown) || keyboard_input.pressed(KeyCode::KeyS) {
-            direction.y -= 1.0;
-        }
-        if keyboard_input.pressed(KeyCode::ArrowLeft) || keyboard_input.pressed(KeyCode::KeyA) {
-            direction.x -= 1.0;
-        }
-        if keyboard_input.pressed(KeyCode::ArrowRight) || keyboard_input.pressed(KeyCode::KeyD) {
-            direction.x += 1.0;
+            forward_input -= 1.0;
         }
 
-        if direction.length_squared() > 0.0 {
-            direction = direction.normalize();
-            velocity.0 = direction * MOUSE_SPEED;
+        // Rotation (A/D keys now rotate instead of strafe)
+        if keyboard_input.pressed(KeyCode::ArrowLeft) || keyboard_input.pressed(KeyCode::KeyA) {
+            rotation_input += 1.0; // Rotate counter-clockwise
+        }
+        if keyboard_input.pressed(KeyCode::ArrowRight) || keyboard_input.pressed(KeyCode::KeyD) {
+            rotation_input -= 1.0; // Rotate clockwise
+        }
+
+        // Apply forward/backward movement based on current rotation
+        if forward_input != 0.0 {
+            let rotation = transform.rotation.to_euler(EulerRot::ZYX).0;
+            let direction = Vec2::new(rotation.cos(), rotation.sin());
+            velocity.0 = direction * forward_input * MOUSE_SPEED;
         } else {
             velocity.0 = Vec2::ZERO;
         }
+
+        // Apply rotation
+        const ROTATION_SPEED: f32 = 3.0; // Adjust this value to control rotation speed
+        angular_velocity.0 = rotation_input * ROTATION_SPEED;
     }
 }
 
@@ -71,7 +81,7 @@ fn camera_zoom(
 ) {
     if let Ok(mut projection) = camera_query.single_mut() {
         const ZOOM_SPEED: f32 = 0.1;
-        const MIN_SCALE: f32 = 0.2;
+        const MIN_SCALE: f32 = 0.1;
         const MAX_SCALE: f32 = 5.0;
 
         // Match on the projection type to handle orthographic projection
@@ -93,6 +103,8 @@ pub struct MouseBundle {
     pub mouse: Mouse,
     pub rigid_body: RigidBody,
     pub collider: Collider,
+    pub linear_velocity: LinearVelocity,
+    pub angular_velocity: AngularVelocity,
     pub mesh: Mesh2d,
     pub material: MeshMaterial2d<ColorMaterial>,
     pub transform: Transform,
@@ -115,6 +127,8 @@ impl MouseBundle {
             rigid_body: RigidBody::Dynamic,
             collider: Collider::circle(MOUSE_RADIUS),
             mesh: Mesh2d(mesh),
+            linear_velocity: LinearVelocity::default(),
+            angular_velocity: AngularVelocity::default(),
             material: MeshMaterial2d(material),
             transform: Transform::from_translation(position)
                 .with_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_2)),
