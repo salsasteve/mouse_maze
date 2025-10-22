@@ -195,7 +195,7 @@ def visualize_results(occupancy_map, path=None, start_pos=None, goal_pos=None):
 def main():
     """Main function to run the process."""
     try:
-        with open("/Users/solz/Documents/rust/mouse_maze/python/occupancy/lidar_data_1758831298.json", 'r') as f:
+        with open("/Users/solz/Documents/rust/mouse_maze/output_data/lidar/lidar_data_1760066218.json", 'r') as f:
             lidar_data = json.load(f)
     except FileNotFoundError:
         print("Error: lidar_data.json not found. Please place it in the same directory.")

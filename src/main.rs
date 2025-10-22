@@ -7,12 +7,16 @@ mod lidar;
 mod maze_maker;
 mod mouse;
 mod brain;
+mod maze_solving {
+    pub mod hand_on_wall;
+}
 
 use game_integration::GameIntegrationPlugin;
 use lidar::LiDARPlugin;
 use maze_maker::MazeMakerPlugin;
 use mouse::MousePlugin;
 use brain::BrainPlugin;
+use maze_solving::hand_on_wall::HandOnWallPlugin;
 
 fn main() {
     let mut app = App::new();
@@ -37,7 +41,7 @@ fn main() {
     app.add_plugins(LiDARPlugin);
     app.add_plugins(GameIntegrationPlugin);
     app.add_plugins(BrainPlugin);
-
+    app.add_plugins(HandOnWallPlugin);
     app.insert_resource(Gravity(Vec2::ZERO));
 
     app.run();

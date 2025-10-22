@@ -1,0 +1,229 @@
+use crate::{
+    mouse::Mouse,
+};
+use avian2d::prelude::{AngularVelocity, LinearVelocity};
+use bevy::prelude::*;
+
+pub struct BrainPlugin;
+
+#[derive(Event, Debug, Clone)]
+pub struct BrainCommand {
+    pub entity: Entity,
+    pub action: String,
+}
+
+#[derive(Resource)]
+struct BrainState {
+    action_timer: Timer,
+    log_timer: Timer,
+    mode: AIMode,
+}
+
+#[derive(Default, PartialEq, Debug)]
+enum AIMode {
+    #[default]
+    StartupMoveForward,
+    StartupRotate,
+    WallFollowing,
+}
+
+impl Default for BrainState {
+    fn default() -> Self {
+        Self {
+            // The startup sequence will last for 7 seconds
+            action_timer: Timer::from_seconds(7.0, TimerMode::Once),
+            // We'll log brain status every half a second to avoid spam
+            log_timer: Timer::from_seconds(0.5, TimerMode::Repeating),
+            mode: AIMode::StartupMoveForward,
+        }
+    }
+}
+
+impl Plugin for BrainPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_event::<BrainCommand>();
+        app.init_resource::<BrainState>();
+        app.add_systems(Update, (brain_system, execute_commands));
+    }
+}
+
+// This system acts as the brain's state machine.
+fn brain_system(
+    mut brain_commands: EventWriter<BrainCommand>,
+    mut brain_state: ResMut<BrainState>,
+    time: Res<Time>,
+) {
+   // Tick timers
+    brain_state.log_timer.tick(time.delta());
+    let should_log = brain_state.log_timer.just_finished();
+
+    // --- STATE TRANSITION LOGIC (runs once per frame) ---
+    // This section manages transitions between different AI modes.
+    match brain_state.mode {
+        AIMode::StartupMoveForward => {
+            brain_state.action_timer.tick(time.delta());
+            if brain_state.action_timer.just_finished() {
+                brain_state.mode = AIMode::StartupRotate;
+                
+                // Calculate time needed for a 90-degree turn (PI/2 radians)
+                const TURN_RADIANS: f32 = std::f32::consts::FRAC_PI_2;
+                const HARD_TURN_SPEED: f32 = 2.5; // Must match execute_commands
+                let turn_duration = TURN_RADIANS / HARD_TURN_SPEED;
+                
+                brain_state.action_timer.set_duration(std::time::Duration::from_secs_f32(turn_duration));
+                brain_state.action_timer.reset();
+                info!("🧠 Startup move complete. Now rotating 90 degrees.");
+            }
+        }
+        AIMode::StartupRotate => {
+            brain_state.action_timer.tick(time.delta());
+            if brain_state.action_timer.just_finished() {
+                brain_state.mode = AIMode::WallFollowing;
+                info!("🧠 Startup rotation complete. Engaging wall-following mode.");
+            }
+        }
+        AIMode::WallFollowing => { /* No transitions out of this state */ }
+    }
+
+    // --- COMMAND GENERATION LOGIC (runs for each AI entity with a lidar scan) ---
+    for event in lidar_events.read() {
+        // Only process AI entities
+        if let Ok(controller) = controller_query.get(event.entity) {
+            if controller.mode != ControlMode::AI {
+                continue;
+            }
+        } else {
+            continue;
+        }
+
+        // Decide action based on the current AI mode
+        match brain_state.mode {
+            AIMode::StartupMoveForward => {
+                brain_commands.write(BrainCommand {
+                    entity: event.entity,
+                    action: "move_forward".to_string(),
+                });
+                if should_log {
+                    info!(
+                        "🧠 Startup Forward... {:.1}s remaining.",
+                        brain_state.action_timer.remaining_secs()
+                    );
+                }
+            }
+            AIMode::StartupRotate => {
+                brain_commands.write(BrainCommand {
+                    entity: event.entity,
+                    action: "startup_rotate".to_string(),
+                });
+                 if should_log {
+                    info!(
+                        "🧠 Startup Rotate... {:.1}s remaining.",
+                        brain_state.action_timer.remaining_secs()
+                    );
+                }
+            }
+            AIMode::WallFollowing => {
+                // --- Wall Follower Logic ---
+                let recording = &event.recording;
+
+                const IDEAL_DISTANCE: f32 = 50.0;
+                const DISTANCE_THRESHOLD: f32 = 10.0;
+                const MAX_DISTANCE: f32 = 150.0;
+
+                let mut front_min = f32::MAX;
+                let mut right_min = f32::MAX;
+
+                for (&distance, &angle) in recording.distances.iter().zip(recording.angles.iter()) {
+                    let relative_angle =
+                        (angle - recording.agent_rotation).rem_euclid(std::f32::consts::TAU);
+                    
+                    if relative_angle < std::f32::consts::FRAC_PI_4
+                        || relative_angle > 7.0 * std::f32::consts::FRAC_PI_4
+                    {
+                        if distance < front_min {
+                            front_min = distance;
+                        }
+                    }
+                    
+                    if relative_angle > 4.71 && relative_angle < 5.76 {
+                        if distance < right_min {
+                            right_min = distance;
+                        }
+                    }
+                }
+
+                let action = if front_min < IDEAL_DISTANCE {
+                    "hard_left"
+                } else if right_min > MAX_DISTANCE {
+                    "turn_right"
+                } else if right_min < IDEAL_DISTANCE - DISTANCE_THRESHOLD {
+                    "turn_left"
+                } else if right_min > IDEAL_DISTANCE + DISTANCE_THRESHOLD {
+                    "turn_right"
+                } else {
+                    "move_forward"
+                };
+
+                if should_log {
+                    info!("🧠 Wall Following | Front: {:.1}, Right: {:.1} → {}", front_min, right_min, action);
+                }
+
+                brain_commands.write(BrainCommand {
+                    entity: event.entity,
+                    action: action.to_string(),
+                });
+            }
+        }
+    }
+}
+
+
+fn execute_commands(
+    mut brain_commands: EventReader<BrainCommand>,
+    mut mouse_query: Query<(&mut LinearVelocity, &mut AngularVelocity, &Transform), With<Mouse>>,
+) {
+    const SPEED: f32 = 200.0;
+    const TURN_SPEED: f32 = 2.0; // For gentle turns
+    const HARD_TURN_SPEED: f32 = 3.5; // For avoiding obstacles
+    const STARTUP_TURN_SPEED: f32 = 2.5; // For the initial spin
+
+    for command in brain_commands.read() {
+        if let Ok((mut velocity, mut angular_velocity, transform)) =
+            mouse_query.get_mut(command.entity)
+        {
+            let rotation = transform.rotation.to_euler(EulerRot::ZYX).0;
+            let direction = Vec2::new(rotation.cos(), rotation.sin());
+
+            match command.action.as_str() {
+                "move_forward" => {
+                    velocity.x = direction.x * SPEED;
+                    velocity.y = direction.y * SPEED;
+                    angular_velocity.0 = 0.0;
+                }
+                "turn_left" => {
+                    velocity.x = direction.x * SPEED * 0.7;
+                    velocity.y = direction.y * SPEED * 0.7;
+                    angular_velocity.0 = TURN_SPEED;
+                }
+                "turn_right" => {
+                    velocity.x = direction.x * SPEED * 0.7;
+                    velocity.y = direction.y * SPEED * 0.7;
+                    angular_velocity.0 = -TURN_SPEED;
+                }
+                "hard_left" => {
+                    velocity.0 = Vec2::ZERO;
+                    angular_velocity.0 = HARD_TURN_SPEED;
+                }
+                "startup_rotate" => {
+                    velocity.0 = Vec2::ZERO;
+                    angular_velocity.0 = STARTUP_TURN_SPEED;
+                }
+                _ => {
+                    // Default case: stop
+                    velocity.0 = Vec2::ZERO;
+                    angular_velocity.0 = 0.0;
+                }
+            }
+        }
+    }
+}

@@ -11,7 +11,7 @@ impl Plugin for MousePlugin {
     }
 }
 
-pub const MOUSE_RADIUS: f32 = 4.0;
+pub const MOUSE_RADIUS: f32 = 8.0;
 const MOUSE_SPEED: f32 = 200.0;
 
 #[derive(Component)]

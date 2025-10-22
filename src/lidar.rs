@@ -133,13 +133,16 @@ fn update_lidar(lidar: &mut LiDAR, delta_time: f32) -> bool {
 }
 
 /// Calculate ray angle for a given ray index
+// Replace your calculate_ray_angle function:
 fn calculate_ray_angle(
     ray_index: usize,
     total_rays: usize,
     base_rotation: f32,
     angle_range: f32,
 ) -> f32 {
-    base_rotation + (ray_index as f32 / total_rays as f32) * angle_range - (angle_range / 2.0)
+    // For full 360° coverage, distribute rays evenly around the circle
+    let angle_step = angle_range / total_rays as f32;
+    base_rotation + (ray_index as f32 * angle_step) - (angle_range / 2.0)
 }
 
 /// Cast a single ray and return the hit information
@@ -385,7 +388,7 @@ fn export_data_on_keypress(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     recorder: Res<LiDARDataRecorder>,
 ) {
-    if keyboard_input.just_pressed(KeyCode::KeyS) {
+    if keyboard_input.just_pressed(KeyCode::KeyR) {
         export_lidar_data(&recorder);
     }
 }
