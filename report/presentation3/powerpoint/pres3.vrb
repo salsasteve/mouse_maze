@@ -1,0 +1,20 @@
+\frametitle{Pathfinding Implementation}
+\begin{columns}
+\column{0.5\textwidth}
+\textbf{Algorithms Used:}
+\begin{itemize}
+    \item Manual(Rust)
+    \item Right-Hand Rule(Rust WIP)
+    \item A* Search(In Post-Processing)
+    \item A* Search(ROS2)
+\end{itemize}
+
+\column{0.5\textwidth}
+\begin{lstlisting}[language=Rust]
+// Example Python code
+finder = AStarFinder(
+    diagonal_movement=DiagonalMovement.never
+)
+}
+\end{lstlisting}
+\end{columns}

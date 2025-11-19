@@ -1,0 +1,77 @@
+\documentclass{article}
+
+% --- PACKAGES ---
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage[
+    a4paper,
+    margin=1in
+]{geometry}
+\usepackage{parskip}
+\usepackage{sectsty}
+\usepackage{amsmath}
+
+% --- DOCUMENT INFORMATION ---
+\title{Autonomous MicroMouse Robot}
+\author{Elman Steve Laguna}
+\date{\today}
+
+% --- COMMANDS to prevent page breaks ---
+\sectionfont{\nopagebreak}
+\subsectionfont{\nopagebreak}
+\subsubsectionfont{\nopagebreak}
+\widowpenalty=10000
+\clubpenalty=10000
+
+\begin{document}
+
+\maketitle
+
+\include{reintroduction}
+
+\include{map_generation}
+
+\include{path_finding}
+\include{issues}
+
+\begin{thebibliography}{9}
+
+% --- Academic Paper ---
+\bibitem{slam_review}
+M. Aborizky, H. A. As’ari, A. Fadlil and R. D. P. W. "Lidar-Based 2D SLAM for Mobile Robot in an Indoor Environment: A Review," \textit{2021 9th International Conference on Information and Communication Technology (ICoICT)}, 2021, pp. 488-493. doi: 10.1109/ICoICT52021.2021.9538731.
+
+% --- Web Articles & Tutorials ---
+\bibitem{raycasting_tutorial}
+L. Vandevenne, "Raycasting," \textit{Lode's Computer Graphics Tutorial}. [Online]. Available: \url{https://lodev.org/cgtutor/raycasting.html}
+
+\bibitem{lidar_basics}
+NEON Science, "Lidar Basics," \textit{National Ecological Observatory Network}, 2021. [Online]. Available: \url{https://www.neonscience.org/resources/learning-hub/tutorials/lidar-basics}
+
+\bibitem{line_intersection}
+Zona Land Education, "Intersection of Two Lines," \textit{Zona Land Education}. [Online]. Available: \url{http://zonalandeducation.com/mmts/intersections/intersectionOfTwoLines1/intersectionOfTwoLines1.html}
+
+% --- Videos ---
+\bibitem{lidar_video}
+NEON Science, "How Does LiDAR Remote Sensing Work? Light Detection and Ranging," \textit{YouTube}, Nov. 24, 2014. [Video]. Available: \url{https://www.youtube.com/watch?v=EYbhNSUnIdU}
+
+\bibitem{pygame_raycast_video}
+FinFET, "Raycasting with Pygame in Python! Simple 3D game tutorial Devlog," \textit{YouTube}, Nov. 6, 2021. [Video]. Available: \url{https://www.youtube.com/watch?v=4gqPv7A_YRY}
+
+\bibitem{raycast_explained_video}
+WeirdDevers, "Ray casting fully explained. Pseudo 3D game," \textit{YouTube}, Dec. 27, 2020. [Video]. Available: \url{https://www.youtube.com/watch?v=g8p7nAbDz6Y}
+
+\bibitem{maze_solving_competition_video}
+Veritasium, "The Fastest Maze-Solving Competition On Earth," \textit{YouTube}, May 24, 2023. [Video]. Available: \url{https://www.youtube.com/watch?v=ZMQbHMgK2rw}
+
+\bibitem{mazes_school_video}
+mattbatwings, "What School Didn't Tell You About Mazes \#SoMEpi," \textit{YouTube}, Jun. 22, 2024. [Video]. Available: \url{https://www.youtube.com/watch?v=uctN47p_KVk}
+
+\bibitem{slam_robot_video}
+Kai Nakamura, "How to Make an Autonomous Mapping Robot Using SLAM," \textit{YouTube}, May 14, 2024. [Video]. Available: \url{https://www.youtube.com/watch?v=xqjVTE7QvOg}
+
+\bibitem{lidar_ros_video}
+Articulated Robotics, "How do we add LIDAR to a ROS robot?," \textit{YouTube}, Jun. 2, 2022. [Video]. Available: \url{https://www.youtube.com/watch?v=eJZXRncGaGM}
+
+\end{thebibliography}
+
+\end{document}

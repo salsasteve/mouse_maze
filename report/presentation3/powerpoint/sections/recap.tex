@@ -1,0 +1,44 @@
+\begin{frame}
+\frametitle{Micromouse Simulation: Technology Stack}
+
+\begin{columns}
+\begin{column}{0.5\textwidth}
+\textbf{Core Technologies}
+\begin{itemize}
+    \item \textbf{Rust} - High-performance simulation
+    \item \textbf{Bevy Engine (v0.16.1)} - ECS framework
+    \item \textbf{Avian2D} - Physics simulation
+    \item \textbf{Knossos} - Maze generation
+\end{itemize}
+
+\vspace{0.3cm}
+\textbf{Python Ecosystem}
+\begin{itemize}
+    \item Data analysis \& visualization
+    \item Occupancy grid construction
+\end{itemize}
+\end{column}
+
+\begin{column}{0.5\textwidth}
+\textbf{Pipeline Architecture}
+\begin{enumerate}
+    \item Rust/Bevy simulation
+    \begin{itemize}
+        \item LiDAR raycast system
+        \item Robot control (WIP)
+    \end{itemize}
+    \item JSON data export
+    \item Python post-processing
+\end{enumerate}
+
+\vspace{0.3cm}
+\textbf{Why This Stack?}
+\begin{itemize}
+    \item Performance + Safety
+    \item Modular ECS design
+    \item Easy Python analysis
+\end{itemize}
+\end{column}
+\end{columns}
+
+\end{frame}

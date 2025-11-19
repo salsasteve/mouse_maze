@@ -1,0 +1,50 @@
+\newpage
+\subsection*{Small Maze Generation}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{small_map.png}
+    \caption{A 5$\times$5 maze configuration generating an 11$\times$11 tile grid.}
+    \label{fig:small_maze}
+\end{figure}
+
+\newpage
+\subsection*{Medium Maze Generation}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{medium_map.png}
+    \caption{A 10$\times$10 maze configuration generating a 21$\times$21 tile grid.}
+    \label{fig:medium_maze}
+\end{figure}
+
+\newpage
+\subsection*{Large Maze Generation}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{enormous_map.png}
+    \caption{A 50$\times$50 maze configuration generating a 101$\times$101 tile grid.}
+    \label{fig:large_maze}
+\end{figure}
+
+\newpage
+\subsection*{Maze Generation}
+
+The maze generation system uses the \texttt{knossos} library with various algorithms to create procedurally generated mazes. The generation process follows these key steps:
+
+\begin{enumerate}
+    \item \textbf{Cell Grid Creation}: An initial grid of \texttt{MAZE\_WIDTH} $\times$ \texttt{MAZE\_HEIGHT} cells is created, representing potential passages in the maze.
+    
+    \item \textbf{Wall Insertion}: The Recursive Backtracking algorithm carves passages through the grid, with walls placed between cells and around the perimeter.
+    
+    \item \textbf{Dimension Calculation}: The final tile count follows the formula: 
+    \begin{equation}
+        \text{Final Size} = (\text{MAZE\_WIDTH} \times 2 + 1) \times (\text{MAZE\_HEIGHT} \times 2 + 1)
+    \end{equation}
+    This accounts for the cells, walls between cells, and border walls.
+    
+    \item \textbf{Start and Goal Placement}: The algorithm automatically places a start position and goal position within the generated maze using a configurable seed for reproducibility.
+\end{enumerate}
+
+\noindent The use of a fixed seed (\texttt{SEED = 490}) ensures that the same maze configuration is generated consistently for testing and comparison purposes. The \texttt{GAME\_MAP\_SPAN} parameter controls the spacing between maze elements, set to 1 for standard wall thickness. Turns out that using too thick of a wall makes this a different problem. I have to start using slam techniques. 
