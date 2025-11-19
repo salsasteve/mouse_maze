@@ -1,0 +1,65 @@
+\newpage
+\section*{Project Status and Technology Stack}
+
+This project combines multiple technologies to create a simulation of a micromouse competition robot.
+
+\subsection*{Core Technologies}
+\begin{description}
+    \item[Rust Programming Language] The entire simulation is built using the Rust Programming Language.
+    \item[Bevy Game Engine (v0.16.1)] Bevy provides the foundational framework for the simulation.
+    \item[Physics Simulation - Avian2D] Avian2D provides realistic 2D physics simulation.
+\end{description}
+
+\subsection*{Supporting Libraries}
+\begin{description}
+    \item[bevy\_ecs\_tilemap] Specialized tilemap rendering for maze visualization.
+    \item[Knossos] Procedural maze generation library.
+\end{description}
+
+\subsection*{Python Ecosystem}
+Python handles data analysis and visualization.
+\begin{abstract}
+    \item[Matplotlib] Visualization of occupancy grids and sensor data.
+    \item[NumPy] Fast Math and array operations.
+    \item[OpenCV] Computer vision and image processing.
+    \item[Pathfinding] A* pathfinding algorithms for navigation.
+    \item[Polars] Efficient data manipulation and analysis.
+    \item[Scikit-image] Image processing and computer vision.
+\end{abstract}
+
+\subsection*{Architecture Integration}
+The system follows a modular pipeline architecture:
+
+\begin{enumerate}
+    \item \textbf{Rust/Bevy}: Real-time simulation, physics, and sensor processing.
+    \begin{itemize}
+        \item Maze generation (Knossos)
+        \item LiDAR simulation (custom raycast system)
+        \item Robot control (WORK IN PROGRESS)
+        \item Physics simulation (Avian2D)
+    \end{itemize}
+    
+    \item \textbf{Data Export}: Sensor readings and position data serialized to JSON via \texttt{serde}.
+    
+    \item \textbf{Python Analysis}: Post-processing and visualization.
+    \begin{itemize}
+        \item Occupancy grid construction from LiDAR scans
+    \end{itemize}
+\end{enumerate}
+
+\subsection*{Development Tools}
+\begin{description}
+    \item[UV Package Manager] Fast, reliable Python dependency management.
+    \item[Cargo] Rust's build system and package manager, handling all compilation and dependencies.
+\end{description}
+
+\subsection*{Design Rationale}
+This technology stack was chosen to balance several competing requirements:
+
+\begin{description}
+    \item[Performance] Rust provides low-level performance with a modern syntax.
+    \item[Safety] Compile-time guarantees prevent logic errors that would be runtime bugs in Python/C++.
+    \item[Modularity] ECS enables easy experimentation with different components.
+    \item[Analysis] Python is super easy to use for data analysis and visualization.
+    \item[Personal Growth] Learning Rust and Bevy is a personal goal.
+\end{description}

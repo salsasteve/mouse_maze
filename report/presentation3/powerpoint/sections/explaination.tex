@@ -1,0 +1,44 @@
+\section{Explanation}
+
+\begin{frame}
+\frametitle{Grid-Based Pathfinding}
+\begin{columns}
+\column{0.5\textwidth}
+\textbf{How It Works:}
+\begin{itemize}
+    \item Map = 2D grid of cells
+    \item Each cell: \textbf{0} = free, \textbf{255} = wall
+    \item Neighbors = adjacent cells
+    \item Check neighbors to find path
+\end{itemize}
+
+\vspace{0.2cm}
+\textbf{Example:}
+\[
+\begin{bmatrix}
+1 & 1 & 0 \\
+1 & 1 & 1 \\
+0 & 1 & 1
+\end{bmatrix}
+\]
+\tiny \textbf{1} = walkable, \textbf{0} = blocked
+
+\column{0.5\textwidth}
+\textbf{Implementation:}
+\begin{itemize}
+    \item Occupancy grid from LiDAR data
+    \item Convert to walkability matrix
+    \item A* searches adjacent cells
+    \item No explicit connection storage
+\end{itemize}
+
+\vspace{0.2cm}
+\textbf{Benefits:}
+\begin{itemize}
+    \item Memory efficient: O(N)
+    \item Fast neighbor lookup: O(1)
+    \item Perfect for grid-based mazes
+    \item Simple to implement
+\end{itemize}
+\end{columns}
+\end{frame}

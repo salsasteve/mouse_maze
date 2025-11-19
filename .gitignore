@@ -2,4 +2,5 @@
 /output_data
 .DS_Store
 __pycache__
-.ruff_cache__
+.ruff_cache
+python/occupancy/.venv

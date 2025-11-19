@@ -6,9 +6,10 @@ use knossos::maze::{GameMap, OrthogonalMazeBuilder, RecursiveBacktracking};
 // --- Constants ---
 const MAZE_WIDTH: usize = 10;
 const MAZE_HEIGHT: usize = 10;
+// FINAL MAZE SIZE = (MAZE_WIDTH * 2 + 1) x (MAZE_HEIGHT * 2 + 1)
 const SEED: u64 = 490;
 const TILE_SIZE: f32 = 16.0;
-const GAME_MAP_SPAN: usize = 3;
+const GAME_MAP_SPAN: usize = 1;
 
 pub struct MazeMakerPlugin;
 

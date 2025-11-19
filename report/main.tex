@@ -1,0 +1,107 @@
+\documentclass{article}
+
+% --- PACKAGES ---
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage[
+    a4paper,
+    margin=1in
+]{geometry}
+\usepackage{parskip}
+\usepackage{sectsty} % Added to control section formatting
+
+% --- DOCUMENT INFORMATION ---
+\title{Autonomous Mapping Robot}
+\author{Elman Steve Laguna}
+\date{\today}
+
+% --- COMMANDS to prevent page breaks ---
+\sectionfont{\nopagebreak}
+\subsectionfont{\nopagebreak}
+\subsubsectionfont{\nopagebreak}
+\widowpenalty=10000
+\clubpenalty=10000
+
+\begin{document}
+
+\maketitle
+
+
+% ===================================================================
+% SECTION 1: REPORT ON THE PROBLEM
+% ===================================================================
+\section{Short Report on Problem}
+
+% --- SUBSECTION: PROJECT DESCRIPTION ---
+\subsection{Description of the Project}
+This project aims to investigate and implement algorithms for autonomous environment mapping and navigation using a simulated agent. The primary goal is to develop a system that can explore an unknown area, construct a map, and calculate efficient routes to a target without human intervention.
+
+% --- SUBSECTION: PROJECT IDEAS & GOALS ---
+\subsection{Project Ideas and Goals}
+
+\subsubsection{Idea 1: 2D Environment Mapping and Pathfinding}
+The core problem is to enable an agent to automatically move through and map an unknown 2D area. This investigation will be approached through a comparative study using three distinct simulation environments to understand the trade-offs and challenges of each.
+The main deliverable for this idea is a functional simulation where an agent successfully maps its environment and navigates around obstacles.
+
+\subsubsection{Idea 2: 2D Maze Traversal and Optimization (Alternative)}
+As an alternative or extension, this idea focuses more specifically on pathfinding optimization within a known environment, such as a maze. Using the same three engines (ROS, PyGame, Bevy), the goal would be to implement and compare various search algorithms (e.g., A*, Dijkstra's) to determine the most efficient path to a target—"the fastest to the cheese." This shifts the focus from exploration and mapping (SLAM) to pure algorithmic performance.
+
+% --- SUBSECTION: LITERATURE SEARCH ---
+\subsection{Preliminary Literature Search}
+Initial research focuses on \textbf{Simultaneous Localization and Mapping (SLAM)}, the core problem of concurrently building a map while tracking an agent's position within it. To simulate sensor data for perception, the project will implement \textbf{ray casting}, using line-intersection calculations to mimic how a Lidar scanner detects obstacles and builds a map. \textbf{Procedural maze generation} will be used to create complex, structured environments for testing the navigation logic. Finally, once a map is generated, \textbf{shortest path algorithms} such as Dijkstra's and A* Search will be investigated and implemented to provide the agent with efficient navigation capabilities. Initially, I will start with a simple handmaid map. Them make the tasks incrementally more difficult.
+
+% --- SUBSECTION: PROPOSED APPROACH ---
+\subsection{Ideas on Approach}
+The proposed approach will begin with the 2D Environment Mapping idea. The project will be executed in three phases:
+\begin{enumerate}
+    \item \textbf{Phase 1: Foundational Learning with ROS.} I will start by mastering the basics of agent control and sensing within a structured environment using the ROS Turtlesim package. This will establish a baseline understanding of robotic simulation.
+    \item \textbf{Phase 2: Custom Simulation with PyGame.} Next, I will develop a 2D simulation from scratch in Python with PyGame. This will provide the flexibility to implement and visualize a mapping algorithm (such as a basic grid-based or occupancy grid map) and a pathfinding algorithm (like A*).
+    \item \textbf{Phase 3: Advanced Implementation in Bevy.} Finally, I will replicate the simulation in Rust using the Bevy engine. This phase will focus on evaluating the performance, modularity, and scalability benefits of a modern game engine for robotics simulations.
+\end{enumerate}
+Throughout these phases, the primary challenge will be to process simulated sensor data (e.g., raycasting to simulate Lidar) to build the map and inform the navigation logic.
+
+
+
+\include{small_map}
+
+\begin{thebibliography}{9}
+
+% --- Academic Paper ---
+\bibitem{slam_review}
+M. Aborizky, H. A. As’ari, A. Fadlil and R. D. P. W. "Lidar-Based 2D SLAM for Mobile Robot in an Indoor Environment: A Review," \textit{2021 9th International Conference on Information and Communication Technology (ICoICT)}, 2021, pp. 488-493. doi: 10.1109/ICoICT52021.2021.9538731.
+
+% --- Web Articles & Tutorials ---
+\bibitem{raycasting_tutorial}
+L. Vandevenne, "Raycasting," \textit{Lode's Computer Graphics Tutorial}. [Online]. Available: \url{https://lodev.org/cgtutor/raycasting.html}
+
+\bibitem{lidar_basics}
+NEON Science, "Lidar Basics," \textit{National Ecological Observatory Network}, 2021. [Online]. Available: \url{https://www.neonscience.org/resources/learning-hub/tutorials/lidar-basics}
+
+\bibitem{line_intersection}
+Zona Land Education, "Intersection of Two Lines," \textit{Zona Land Education}. [Online]. Available: \url{http://zonalandeducation.com/mmts/intersections/intersectionOfTwoLines1/intersectionOfTwoLines1.html}
+
+% --- Videos ---
+\bibitem{lidar_video}
+NEON Science, "How Does LiDAR Remote Sensing Work? Light Detection and Ranging," \textit{YouTube}, Nov. 24, 2014. [Video]. Available: \url{https://www.youtube.com/watch?v=EYbhNSUnIdU}
+
+\bibitem{pygame_raycast_video}
+FinFET, "Raycasting with Pygame in Python! Simple 3D game tutorial Devlog," \textit{YouTube}, Nov. 6, 2021. [Video]. Available: \url{https://www.youtube.com/watch?v=4gqPv7A_YRY}
+
+\bibitem{raycast_explained_video}
+WeirdDevers, "Ray casting fully explained. Pseudo 3D game," \textit{YouTube}, Dec. 27, 2020. [Video]. Available: \url{https://www.youtube.com/watch?v=g8p7nAbDz6Y}
+
+\bibitem{maze_solving_competition_video}
+Veritasium, "The Fastest Maze-Solving Competition On Earth," \textit{YouTube}, May 24, 2023. [Video]. Available: \url{https://www.youtube.com/watch?v=ZMQbHMgK2rw}
+
+\bibitem{mazes_school_video}
+mattbatwings, "What School Didn't Tell You About Mazes \#SoMEpi," \textit{YouTube}, Jun. 22, 2024. [Video]. Available: \url{https://www.youtube.com/watch?v=uctN47p_KVk}
+
+\bibitem{slam_robot_video}
+Kai Nakamura, "How to Make an Autonomous Mapping Robot Using SLAM," \textit{YouTube}, May 14, 2024. [Video]. Available: \url{https://www.youtube.com/watch?v=xqjVTE7QvOg}
+
+\bibitem{lidar_ros_video}
+Articulated Robotics, "How do we add LIDAR to a ROS robot?," \textit{YouTube}, Jun. 2, 2022. [Video]. Available: \url{https://www.youtube.com/watch?v=eJZXRncGaGM}
+
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,61 @@
+\section{Methodology}
+
+\begin{frame}
+\frametitle{Rust System Architecture}
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth,height=0.75\textheight,keepaspectratio]{images/rust-system-arch.png}
+    \caption{Rust Implementation}
+\end{figure}
+\end{frame}
+
+\begin{frame}
+\frametitle{ROS2 Control Flow}
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth,height=0.75\textheight,keepaspectratio]{images/ros2-system-arch.png}
+    \caption{ROS2 Control Flow}
+\end{figure}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Pathfinding Implementation}
+\begin{columns}
+\column{0.5\textwidth}
+\textbf{Algorithms Used:}
+\begin{itemize}
+    \item Manual(Rust)
+    \item Right-Hand Rule(Rust WIP)
+    \item A* Search(In Post-Processing)
+    \item A* Search(ROS2)
+\end{itemize}
+
+\column{0.5\textwidth}
+\begin{lstlisting}[language=Rust]
+// Example Python code
+finder = AStarFinder(
+    diagonal_movement=DiagonalMovement.never
+)
+}
+\end{lstlisting}
+\end{columns}
+\end{frame}
+
+\begin{frame}
+\frametitle{Maze Mapping Strategy}
+\begin{columns}
+\column{0.4\textwidth}
+\begin{itemize}
+    \item \textbf{Exploration Phase:} Robot discovers maze structure
+    \item \textbf{Mapping:} Build internal representation using a 2D grid
+    \item \textbf{No Diagonal Movement:} Restrict to orthogonal moves
+    \item \textbf{Optimization:} Calculate shortest path after full exploration
+\end{itemize}
+
+\column{0.6\textwidth}
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{images/nodiag.png}
+\end{figure}
+\end{columns}
+\end{frame}

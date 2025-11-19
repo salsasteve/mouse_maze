@@ -1,0 +1,35 @@
+\section{Introduction}
+
+\begin{frame}
+\frametitle{Project Overview}
+\begin{itemize}
+    \item \textbf{Goal:} Develop an autonomous robot simulation that can navigate and solve a maze
+    \item \textbf{Implementation:} Written in Rust initially but moved simulation to ROS2
+    \item \textbf{Features:}
+    \begin{itemize}
+        \item Simulated pathfinding algorithms (ROS2 + C++)
+        \item Used Docker to run ROS2 on my Mac
+        \item Generated occupancy grids from LiDAR data (Rust + Python)
+    \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{MicroMouse Challenge}
+\begin{columns}
+\column{0.5\textwidth}
+\begin{itemize}
+    \item Classic robotics competition
+    \item Navigate from start to goal
+    \item Find optimal path
+    \item Minimize solve time
+\end{itemize}
+
+\column{0.5\textwidth}
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{images/maze.jpg}
+    \caption{Competition Maze}
+\end{figure}
+\end{columns}
+\end{frame}

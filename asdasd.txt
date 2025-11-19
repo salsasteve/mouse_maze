@@ -1,0 +1,81 @@
+extends CharacterBody2D
+
+const WALK_FORCE = 600
+const WALK_MAX_SPEED = 200
+const STOP_FORCE = 1300
+const JUMP_SPEED = 300
+const FALL_THRESHOLD = 30.0
+# ADDED: A slower fall speed for when sliding on a wall
+const WALL_SLIDE_SPEED = 50.0 
+
+@onready var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
+@onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
+
+# ADDED: Variable to store wall contact direction (-1 left, 1 right, 0 none)
+var wall_direction = 0
+
+func _physics_process(delta):
+	# --- HORIZONTAL MOVEMENT ---
+	var direction = Input.get_axis("run_left", "run_right")
+
+	if direction != 0:
+		velocity.x += WALK_FORCE * direction * delta
+	else:
+		velocity.x = move_toward(velocity.x, 0, STOP_FORCE * delta)
+	
+	velocity.x = clamp(velocity.x, -WALK_MAX_SPEED, WALK_MAX_SPEED)
+
+	# --- VERTICAL MOVEMENT ---
+	velocity.y += gravity * delta
+	
+	if is_on_floor() and Input.is_action_just_pressed("jump"):
+		velocity.y = -JUMP_SPEED
+	
+	# --- APPLY MOVEMENT & CHECK STATE ---
+	move_and_slide()
+	# ADDED: Call the function to check for walls after moving
+	update_wall_state()
+	
+	# BONUS: Apply slower fall speed if wall sliding
+	if wall_direction != 0:
+		velocity.y = min(velocity.y, WALL_SLIDE_SPEED)
+
+	# --- ANIMATION ---
+	update_animation()
+
+
+func update_wall_state() -> void:
+	wall_direction = 0
+	if is_on_wall_only():
+		var collision = get_last_slide_collision()
+		if collision:
+			var normal = collision.get_normal()
+			if normal.is_equal_approx(Vector2.RIGHT):
+				wall_direction = -1 # Wall on the left
+			elif normal.is_equal_approx(Vector2.LEFT):
+				wall_direction = 1 # Wall on the right
+
+func update_animation() -> void:
+	# Flipping is a bit different now; we want to face the wall when sliding
+	if wall_direction != 0:
+		animated_sprite.flip_h = (wall_direction == 1) # Flip if wall is on the right
+	elif velocity.x != 0:
+		animated_sprite.flip_h = (velocity.x < 0)
+
+	var new_animation: String
+	# UPDATED: Added wall_sliding as the highest priority animation when in the air
+	if wall_direction != 0:
+		new_animation = "wall_sliding" # Make sure you have this animation
+	elif not is_on_floor():
+		if velocity.y > FALL_THRESHOLD:
+			new_animation = "falling"
+		else:
+			new_animation = "jump"
+	else:
+		if abs(velocity.x) > 10.0:
+			new_animation = "running"
+		else:
+			new_animation = "idle" 
+			
+	if animated_sprite.animation != new_animation:
+		animated_sprite.play(new_animation)
