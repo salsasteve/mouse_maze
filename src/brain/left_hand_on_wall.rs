@@ -217,3 +217,211 @@ fn turn_around(current: Direction) -> Direction {
         Direction::Right => Direction::Left,
     }
 }
+
+/*
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    LEFT-HAND-ON-WALL ALGORITHM DOCUMENTATION                 ║
+╔══════════════════════════════════════════════════════════════════════════════╗
+
+OVERVIEW:
+─────────
+The left-hand-on-wall algorithm is a classic maze-solving technique that works by
+keeping the left hand in contact with a wall and following it continuously. This
+guarantees finding the exit in any maze with walls connected to the entrance,
+though the path may not be optimal.
+
+CORE PRINCIPLE:
+───────────────
+1. Always prefer turning left (to maintain wall contact)
+2. If left turn is blocked, go straight
+3. If straight is blocked, turn right
+4. If all three are blocked, turn around (dead end)
+
+HOW IT WORKS IN THIS IMPLEMENTATION:
+────────────────────────────────────
+This system uses LiDAR sensor data to detect walls and make navigation decisions.
+The mouse continuously scans its environment in a 360° radius and processes the
+distance readings to determine which direction to move.
+
+KEY COMPONENTS:
+───────────────
+1. LiDARScanEvent: Provides 360° distance measurements
+2. LeftHandOnWallConfig: Configurable thresholds for wall detection
+3. Direction enum: Up, Down, Left, Right (absolute world coordinates)
+4. Mouse rotation: Tracked to determine current facing direction
+
+CONFIGURATION PARAMETERS:
+─────────────────────────
+• wall_threshold (default: TILE_SIZE * 0.6 ≈ 9.6 units)
+  - Minimum distance to consider a path "open"
+  - If distance < threshold, the path is blocked
+
+• left_wall_distance (default: TILE_SIZE * 0.6 ≈ 9.6 units)
+  - Expected distance to maintain from left wall
+  - If distance > threshold, mouse turns left to find wall
+
+• goal_distance (default: TILE_SIZE * 0.5 ≈ 8.0 units)
+  - Distance at which goal is considered "reached"
+
+SENSOR DATA PROCESSING:
+──────────────────────
+The LiDAR scan provides distances at multiple angles. These are grouped into
+four directional quadrants relative to the mouse's current facing:
+
+• Front:  -45° to +45° (0° ± 45°)
+• Left:   +45° to +135° (90° ± 45°)
+• Back:   +135° to +225° (180° ± 45°)
+• Right:  +225° to +315° (270° ± 45°)
+
+For each quadrant, we take the MINIMUM distance to get the closest obstacle.
+
+DECISION LOGIC:
+───────────────
+The algorithm follows this priority order:
+
+1. GOAL CHECK (highest priority)
+   - If distance to goal < goal_distance → STOP (success!)
+
+2. DEAD END DETECTION
+   - If front, left, AND right are all blocked, but back is open → Turn around
+
+3. LEFT WALL LOST
+   - If left wall distance > left_wall_distance → Turn left
+   - This ensures we maintain contact with the left wall
+
+4. WALL AHEAD
+   - If front distance < wall_threshold → Turn right
+   - Can't go forward, so follow the wall by turning right
+
+5. DEFAULT: FOLLOW WALL
+   - Move straight ahead while maintaining left wall proximity
+
+COORDINATE SYSTEM:
+──────────────────
+• World coordinates: Fixed reference frame
+  - Direction::Right = 0° (positive X-axis)
+  - Direction::Up = 90° (positive Y-axis)
+  - Direction::Left = 180° (negative X-axis)
+  - Direction::Down = 270° (negative Y-axis)
+
+• Mouse rotation: Angle in radians from world X-axis
+• Relative angles: Calculated from mouse's current facing direction
+
+WHY IT WORKS:
+─────────────
+The left-hand-on-wall algorithm is guaranteed to solve any "simply connected" maze
+(where all walls are connected to the outer boundary). By consistently following
+the left wall, you will eventually trace the entire perimeter of the maze and
+find the exit.
+
+LIMITATIONS:
+────────────
+• May not find the shortest path (explores unnecessarily)
+• Fails in mazes with disconnected walls or islands
+• Can loop indefinitely if the goal is in an isolated section
+
+BEVY ECS INTEGRATION:
+────────────────────
+This system runs in Bevy's Update schedule and:
+1. Reads LiDARScanEvent from the event stream
+2. Queries Mouse entities with Transform, MovementState, and MouseCommands
+3. Only processes when BrainMode::LeftHandOnWall is active
+4. Only makes decisions when the mouse is stationary (not currently moving)
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                              ALGORITHM FLOWCHART                             ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+                           ┌─────────────────────┐
+                           │  LiDAR Scan Event   │
+                           └──────────┬──────────┘
+                                      │
+                                      ▼
+                           ┌─────────────────────┐
+                           │  Is mouse moving?   │
+                           └──────────┬──────────┘
+                                      │
+                         Yes ◄────────┼────────► No
+                          │           │           │
+                          │           │           ▼
+                          │           │  ┌─────────────────────┐
+                          │           │  │ Get current position│
+                          │           │  │   and rotation      │
+                          │           │  └──────────┬──────────┘
+                          │           │             │
+                          │           │             ▼
+                          │           │  ┌─────────────────────┐
+                          │           │  │ Check goal distance │
+                          │           │  └──────────┬──────────┘
+                          │           │             │
+                          │           │       ┌─────┴─────┐
+                          │           │       │           │
+                          │           │  < goal_dist   >= goal_dist
+                          │           │       │           │
+                          │           │       ▼           ▼
+                          │           │  ┌─────────┐  ┌─────────────────────┐
+                          │           │  │  STOP!  │  │ Process LiDAR scan  │
+                          │           │  │ Success │  │ Get F/L/R/B dists   │
+                          │           │  └─────────┘  └──────────┬──────────┘
+                          │           │                           │
+                          │           │                           ▼
+                          │           │              ┌────────────────────────┐
+                          │           │              │ F, L, R blocked AND    │
+                          │           │              │    back open?          │
+                          │           │              └────────┬───────────────┘
+                          │           │                       │
+                          │           │                  ┌────┴────┐
+                          │           │                  │         │
+                          │           │                 Yes       No
+                          │           │                  │         │
+                          │           │                  ▼         ▼
+                          │           │          ┌──────────┐  ┌──────────────────┐
+                          │           │          │Turn 180° │  │ Left dist >      │
+                          │           │          │ (DEAD END)  │ left_wall_dist?  │
+                          │           │          └─────┬────┘  └────────┬─────────┘
+                          │           │                │                 │
+                          │           │                │            ┌────┴────┐
+                          │           │                │            │         │
+                          │           │                │           Yes       No
+                          │           │                │            │         │
+                          │           │                │            ▼         ▼
+                          │           │                │    ┌────────────┐  ┌─────────────────┐
+                          │           │                │    │ Turn left  │  │ Front dist <    │
+                          │           │                │    │(find wall) │  │ wall_threshold? │
+                          │           │                │    └─────┬──────┘  └────────┬────────┘
+                          │           │                │          │                  │
+                          │           │                │          │             ┌────┴────┐
+                          │           │                │          │             │         │
+                          │           │                │          │            Yes       No
+                          │           │                │          │             │         │
+                          │           │                │          │             ▼         ▼
+                          │           │                │          │     ┌────────────┐  ┌──────────┐
+                          │           │                │          │     │Turn right  │  │ Go       │
+                          │           │                │          │     │(avoid wall)│  │ straight │
+                          │           │                │          │     └─────┬──────┘  └────┬─────┘
+                          │           │                │          │           │              │
+                          │           │                └──────────┴───────────┴──────────────┘
+                          │           │                                       │
+                          │           │                                       ▼
+                          │           │                           ┌───────────────────────┐
+                          │           │                           │ Issue move command    │
+                          │           │                           │  to MouseCommands     │
+                          │           │                           └───────────────────────┘
+                          │           │
+                          └───────────┴────► Wait for next frame
+                                      │
+                                      │
+                                      ▼
+                                  (Repeat)
+
+LEGEND:
+───────
+F = Front distance    L = Left distance
+R = Right distance    B = Back distance
+
+NOTE: The algorithm only makes decisions when the mouse is stationary. Once a
+      move command is issued, the system waits until the movement completes
+      before processing the next LiDAR scan.
+
+╚══════════════════════════════════════════════════════════════════════════════╝
+*/
