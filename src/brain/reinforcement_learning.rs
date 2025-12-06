@@ -9,9 +9,9 @@ use rand::Rng;
 
 #[derive(Resource)]
 pub struct RLConfig {
-    pub exploration_rate: f32,  // Epsilon for epsilon-greedy
+    pub exploration_rate: f32, // Epsilon for epsilon-greedy
     pub learning_rate: f32,
-    pub discount_factor: f32,   // Gamma
+    pub discount_factor: f32, // Gamma
 }
 
 impl Default for RLConfig {
@@ -54,8 +54,10 @@ pub fn execute_rl_agent(
             if let Some(maze) = &maze_data {
                 let dist = pos.distance(maze.goal_world_pos());
                 if dist < 8.0 {
-                    info!("🎉 [RL] GOAL REACHED! Steps: {}, Reward: {:.1}", 
-                          agent.episode_steps, agent.total_reward);
+                    info!(
+                        "🎉 [RL] GOAL REACHED! Steps: {}, Reward: {:.1}",
+                        agent.episode_steps, agent.total_reward
+                    );
                     return;
                 }
             }
@@ -63,12 +65,14 @@ pub fn execute_rl_agent(
             let observation = get_observation(&event.scan, transform);
             let action = select_action(&observation, &config);
             let reward = calculate_reward(transform, movement_state, &maze_data);
-            
+
             agent.total_reward += reward;
             agent.episode_steps += 1;
 
-            info!("[RL] Step {}: Action {:?}, Reward: {:.2}, Total: {:.2}", 
-                  agent.episode_steps, action, reward, agent.total_reward);
+            info!(
+                "[RL] Step {}: Action {:?}, Reward: {:.2}, Total: {:.2}",
+                agent.episode_steps, action, reward, agent.total_reward
+            );
 
             commands.move_in(action);
         }
@@ -84,8 +88,6 @@ fn get_observation(scan: &crate::lidar::LiDARScan, transform: &Transform) -> Vec
 }
 
 fn select_action(observation: &[f32], config: &RLConfig) -> Direction {
-    
-    
     if rand::rng().random::<f32>() < config.exploration_rate {
         // Random action - use `random_range()` instead of `gen_range()`
         match rand::rng().random_range(0..4) {
@@ -97,15 +99,15 @@ fn select_action(observation: &[f32], config: &RLConfig) -> Direction {
     } else {
         // Greedy: move towards most open direction
         let front_idx = observation.len() / 2;
-        let max_idx = observation[..observation.len()-3]
+        let max_idx = observation[..observation.len() - 3]
             .iter()
             .enumerate()
             .max_by(|a, b| a.1.partial_cmp(b.1).unwrap())
             .map(|(idx, _)| idx)
             .unwrap_or(front_idx);
-        
+
         let angle_ratio = max_idx as f32 / (observation.len() - 3) as f32;
-        
+
         match angle_ratio {
             r if r < 0.25 => Direction::Right,
             r if r < 0.5 => Direction::Up,
@@ -121,21 +123,120 @@ fn calculate_reward(
     maze_data: &Option<Res<MazeData>>,
 ) -> f32 {
     let mut reward = -0.1;
-    
+
     if let Some(maze) = maze_data {
         let pos = transform.translation.truncate();
         let dist_to_goal = pos.distance(maze.goal_world_pos());
-        
+
         reward += 10.0 / (dist_to_goal + 1.0);
-        
+
         if dist_to_goal < 8.0 {
             reward += 1000.0;
         }
-        
+
         if movement_state.target_position.is_none() {
             reward -= 1.0;
         }
     }
-    
+
     reward
 }
+
+/*
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                           AI LEARNING DOCUMENTATION                          ║
+╔══════════════════════════════════════════════════════════════════════════════╗
+
+WHAT IS THIS?
+─────────────
+This is a "smart" mouse brain that learns how to solve the maze by practicing.
+Unlike the "Left-Hand" rule which just follows a wall, this AI tries to figure
+out the best path to the goal by trial and error.
+
+HOW IT LEARNS (LIKE TRAINING A DOG):
+────────────────────────────────────
+1. The mouse looks around (using LiDAR eyes).
+2. It tries a move (Up, Down, Left, or Right).
+3. It gets a "Treat" (Reward) or a "Scolding" (Penalty):
+   - 🍬 Big Treat (+1000) for finding the goal.
+   - 🍬 Small Treat for getting closer to the goal.
+   - ❌ Small Penalty (-0.1) for wasting time.
+   - ❌ Penalty (-1.0) for hitting a wall/getting stuck.
+4. It remembers what happened ("I was here, I moved Right, and I got a treat").
+5. Over time, it learns to pick moves that get the most treats.
+
+THE BRAIN (NEURAL NETWORK):
+───────────────────────────
+The mouse has a digital brain (a Neural Network) that takes in what it sees
+(walls, position) and guesses which move is best.
+- At first, the brain is random (the mouse acts silly).
+- As it practices, we "train" the brain using its memories to make better guesses.
+
+KEY DIFFERENCES:
+────────────────
+| Left-Hand Rule                      | Learning AI (This Code)             |
+|-------------------------------------|-------------------------------------|
+| 🤖 Robot-like: Follows strict rules | 🧠 Brain-like: Learns from practice |
+| 🐢 Slow: Takes the long way around  | 🐇 Fast: Can find shortcuts         |
+| 🧱 Stuck if walls are weird         | 🌟 Can figure out any maze          |
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                              HOW THE CODE WORKS                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+                           ┌─────────────────────┐
+                           │   Mouse Looks     │
+                           │ (LiDAR + Position)  │
+                           └──────────┬──────────┘
+                                      │
+                                      ▼
+                           ┌─────────────────────┐
+                           │   Is mouse moving?  │
+                           └──────────┬──────────┘
+                                      │
+                         Yes ◄────────┼────────► No
+                          │           │           │
+                          │           │           ▼
+                          │           │  ┌─────────────────────┐
+                          │           │  │   Remember what     │
+                          │           │  │   happened last     │
+                          │           │  │   move (Memory)     │
+                          │           │  └──────────┬──────────┘
+                          │           │             │
+                          │           │             ▼
+                          │           │  ┌─────────────────────┐
+                          │           │  │  Did we win/fail?   │
+                          │           │  │ (Goal or too long)  │
+                          │           │  └──────────┬──────────┘
+                          │           │             │
+                          │           │       ┌─────┴─────┐
+                          │           │       │           │
+                          │           │      Yes         No
+                          │           │       │           │
+                          │           │       ▼           ▼
+                          │           │  ┌─────────┐  ┌─────────────────────┐
+                          │           │  │  RESET  │  │    Train Brain?     │
+                          │           │  │ (Start  │  │  (Learn from past)  │
+                          │           │  │  Over)  │  └──────────┬──────────┘
+                          │           │  └─────────┘             │
+                          │           │                   ┌─────┴─────┐
+                          │           │                   │           │
+                          │           │                  Yes         No
+                          │           │                   │           │
+                          │           │                   ▼           ▼
+                          │           │          ┌────────────────┐ ┌──────────────────┐
+                          │           │          │  Study Memory  │ │   Pick Next      │
+                          │           │          │  & Update Brain│ │      Move        │
+                          │           │          └────────┬───────┘ └────────┬─────────┘
+                          │           │                   │                  │
+                          │           └───────────────────┴──────────────────┘
+                          │                               │
+                          │                               ▼
+                          │                   ┌───────────────────────┐
+                          │                   │      MOVE MOUSE       │
+                          │                   └───────────────────────┘
+                          │
+                          └───────────► Wait for move to finish
+
+╚══════════════════════════════════════════════════════════════════════════════╝
+*/

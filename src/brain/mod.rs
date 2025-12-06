@@ -4,7 +4,7 @@ mod reinforcement_learning;
 
 use bevy::prelude::*;
 use left_hand_on_wall::LeftHandOnWallConfig;
-use reinforcement_learning::{RLAgent, RLConfig};  // Add this back
+use reinforcement_learning::{RLAgent, RLConfig};
 
 pub struct BrainPlugin;
 
@@ -12,14 +12,14 @@ impl Plugin for BrainPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<BrainState>()
             .init_resource::<LeftHandOnWallConfig>()
-            .init_resource::<RLConfig>()      // Add this
-            .init_resource::<RLAgent>()       // Add this
+            .init_resource::<RLConfig>()
+            .init_resource::<RLAgent>()
             .add_systems(Startup, setup_ui)
             .add_systems(Update, toggle_brain_mode)
             .add_systems(Update, update_mode_display)
             .add_systems(Update, manual::manual_control)
             .add_systems(Update, left_hand_on_wall::execute_left_hand_on_wall)
-            .add_systems(Update, reinforcement_learning::execute_rl_agent);  // Add this
+            .add_systems(Update, reinforcement_learning::execute_rl_agent);
     }
 }
 
@@ -33,7 +33,7 @@ pub enum BrainMode {
     #[default]
     Manual,
     LeftHandOnWall,
-    ReinforcementLearning,  // Make sure this exists
+    ReinforcementLearning,
 }
 
 impl BrainMode {
