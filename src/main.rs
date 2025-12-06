@@ -1,48 +1,58 @@
-use avian2d::prelude::*;
-use bevy::prelude::*;
-use bevy_ecs_tilemap::TilemapPlugin;
-
-mod game_integration;
+mod brain;
 mod lidar;
 mod maze_maker;
 mod mouse;
-mod brain;
-mod maze_solving {
-    pub mod hand_on_wall;
-}
 
-use game_integration::GameIntegrationPlugin;
-use lidar::LiDARPlugin;
-use maze_maker::MazeMakerPlugin;
-use mouse::MousePlugin;
-use brain::BrainPlugin;
-use maze_solving::hand_on_wall::HandOnWallPlugin;
+use crate::lidar::LiDAR;
+use avian2d::prelude::*;
+use bevy::prelude::*;
+use bevy_ecs_tilemap::TilemapPlugin;
+use lidar::add_lidar;
+use maze_maker::MazeReady;
+use mouse::MouseBundle;
 
 fn main() {
-    let mut app = App::new();
+    App::new()
+        .add_plugins(DefaultPlugins)
+        .add_plugins(PhysicsPlugins::default().with_length_unit(16.0))
+        .insert_resource(Gravity(Vec2::ZERO))
+        .add_plugins(PhysicsDebugPlugin::default())
+        .add_plugins(TilemapPlugin)
+        .add_plugins((
+            mouse::MousePlugin,
+            lidar::LiDARPlugin,
+            maze_maker::MazeMakerPlugin,
+            brain::BrainPlugin,
+        ))
+        .add_systems(Update, handle_maze_ready)
+        .run();
+}
 
-    // Add all plugins first
-    app.add_plugins((
-        DefaultPlugins
-            .set(WindowPlugin {
-                primary_window: Some(Window {
-                    title: "Bevy Maze Example".into(),
-                    ..default()
-                }),
-                ..default()
-            })
-            .set(ImagePlugin::default_nearest()),
-        PhysicsPlugins::default(),
-    ));
+fn handle_maze_ready(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut maze_ready_events: EventReader<MazeReady>,
+) {
+    for event in maze_ready_events.read() {
+        let mouse_entity = commands
+            .spawn(MouseBundle::new(
+                &mut meshes,
+                &mut materials,
+                event.start_world_pos,
+            ))
+            .id();
 
-    app.add_plugins(TilemapPlugin);
-    app.add_plugins(MazeMakerPlugin);
-    app.add_plugins(MousePlugin);
-    app.add_plugins(LiDARPlugin);
-    app.add_plugins(GameIntegrationPlugin);
-    app.add_plugins(BrainPlugin);
-    app.add_plugins(HandOnWallPlugin);
-    app.insert_resource(Gravity(Vec2::ZERO));
+        let lidar_config = LiDAR {
+            range: 100.0,
+            num_rays: 32,
+            update_frequency: 10.0,
+            last_update: 0.0,
+        };
 
-    app.run();
+        add_lidar(&mut commands, mouse_entity, lidar_config);
+
+        info!("Maze ready! Spawning mouse at: {:?}", event.start_world_pos);
+        info!("Goal position: {:?}", event.goal_world_pos);
+    }
 }

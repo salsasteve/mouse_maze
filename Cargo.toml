@@ -11,3 +11,6 @@ knossos = "1.2.0"
 rand = "0.9.2"
 serde = "1.0.226"
 serde_json = "1.0.145"
+burn = "0.19.1"
+burn-ndarray = "0.19.1"  # CPU backend
+burn-wgpu = "0.19.1"   # GPU backend (optional)

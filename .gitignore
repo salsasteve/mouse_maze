@@ -4,3 +4,5 @@
 __pycache__
 .ruff_cache
 python/occupancy/.venv
+*.txt
+report/*
